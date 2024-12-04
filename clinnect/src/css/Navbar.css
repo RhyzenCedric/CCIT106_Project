@@ -9,7 +9,13 @@
     background-color: #333;
     padding: 10px 20px;
     color: white;
-    z-index: 1000; /* Ensures it stays above the map */
+    z-index: 1000;
+}
+
+.navbar-mobile-search {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px;
 }
 
 .navbar-title {
@@ -17,24 +23,25 @@
     font-weight: bold;
 }
 
+/* Desktop Search Styles */
 .navbar-search {
-    position: relative; /* Necessary for positioning the dropdown */
+    position: relative;
     display: flex;
-    margin-right: 100px; /* Add a margin to leave a gap on the right */
+    margin-right: 100px;
 }
 
 .search-input {
-    padding: 8px;
     border: 1px solid #ccc;
+    padding: 8px 30px 8px 8px;
+    background-color: white;
     border-radius: 4px;
-    width: 200px; /* Adjust width as needed */
+    width: 200px;
 }
 
-/* Styling for the dropdown */
 .dropdown {
     position: absolute;
-    top: 100%; /* Position below the navbar-search */
-    left: 0; /* Align with the left side of the input */
+    top: 100%;
+    left: 0;
     width: 300px;
     max-height: 200px;
     overflow-y: auto;
@@ -58,7 +65,94 @@
     background-color: #f1f1f1;
 }
 
+/* Mobile Search Styles */
+.mobile-search-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.mobile-search-icon {
+    cursor: pointer;
+    font-size: 24px;
+    margin-left: 60%;
+}
+
+.mobile-search-active {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.mobile-search-back {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 24px;
+    margin-right: 10px;
+    padding: 0;
+}
+
+.mobile-search-input-wrapper {
+    position: relative;
+    flex-grow: 1;
+}
+
+.mobile-search-input {
+    width: 85%;
+    padding: 8px 30px 8px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.mobile-search-clear {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 0;
+}
+
+.mobile-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    z-index: 1000;
+}
+
+.mobile-dropdown-item {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+}
+
+.mobile-dropdown-item:hover {
+    background-color: #f1f1f1;
+}
+
+/* Responsive Breakpoint */
+@media (max-width: 767px) {
+    .navbar-search {
+        display: none;
+    }
+}
+
 /* Add margin to the map container to push it below the navbar */
 .map-container {
-    margin-top: 60px; /* Adjust this to be greater than or equal to the navbar height */
+    margin-top: 60px;
 }

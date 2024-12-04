@@ -4,7 +4,7 @@ import Navbar from './Navbar';
 import '../css/MapComponent.css'; // Include any additional styling if needed
 
 const MapComponent = () => {
-    const [position, setPosition] = useState([51.505, -0.09]); // Default location
+    const [position, setPosition] = useState([14.0776, 121.149]); // Default location
 
     const FlyToLocation = ({ center }) => {
         const map = useMap();
@@ -17,7 +17,7 @@ const MapComponent = () => {
             <Navbar setPosition={setPosition} />
             <MapContainer
                 center={position}
-                zoom={13}
+                zoom={20}
                 className='map-container'
             >
                 <TileLayer
