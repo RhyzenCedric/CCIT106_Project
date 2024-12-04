@@ -43,7 +43,7 @@
     position: absolute;
     top: 100%;
     left: 0;
-    width: 300px;
+    width: 240px;
     max-height: 200px;
     overflow-y: auto;
     background: white;
@@ -139,12 +139,15 @@
 
 .mobile-dropdown-item {
     padding: 10px;
+    font-size: 16px; /* Ensures text is visible and readable */
+    color: #333; /* Matches dropdown item text color */
     border-bottom: 1px solid #ddd;
+    background-color: white; /* Ensures proper background color */
     cursor: pointer;
 }
 
 .mobile-dropdown-item:hover {
-    background-color: #f1f1f1;
+    background-color: #f1f1f1; /* Highlight on hover */
 }
 
 /* Responsive Breakpoint */

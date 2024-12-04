@@ -1,48 +1,20 @@
-.search-container {
-    position: relative;
-    text-align: center; /* Center the search bar horizontally */
-    margin: 20px 0;
-}
-
-.search-input {
-    width: 300px;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-.dropdown {
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%); /* Center dropdown under the input */
-    width: 300px;
-    max-height: 200px;
-    overflow-y: auto;
-    background: white;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    z-index: 1000;
-}
-
-.dropdown-item {
-    padding: 8px;
-    cursor: pointer;
-    border-bottom: 1px solid #ddd;
-    color: #333;
-}
-
-.dropdown-item:hover {
-    background-color: #f1f1f1;
-}
-
 .map-container {
     height: 500px;
     width: 100vw; /* Full width of the viewport */
     max-width: 100%; /* Ensure no overflow */
     margin: 0 auto; /* Center horizontally */
     display: block;
+}
+
+.custom-marker {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 30px;
+    font-size: 24px;
+    color: red;
+    background: none;
+    border: none;
+    transform: translate(-50%, -100%); /* Adjust the positioning */
 }
