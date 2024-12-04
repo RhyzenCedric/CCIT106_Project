@@ -29,6 +29,10 @@ const Login = () => {
     }
   };
 
+  const handleGuestClick = () => {
+    navigate('/dashboard'); // Replace '/dashboard' with your actual dashboard route
+  };
+
   return (
     <div className="login-container">
       <h1>Welcome to Clinnect!</h1>
@@ -51,6 +55,9 @@ const Login = () => {
 
         <button type="button" onClick={handleSignup}>
           Sign Up
+        </button>
+        <button className="guest-button" onClick={handleGuestClick}>
+        I'm a Guest
         </button>
       </form>
     </div>

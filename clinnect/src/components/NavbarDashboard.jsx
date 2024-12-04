@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faTimes, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import '../css/Navbar.css';
+import '../css/NavbarDashboard.css';
 
-const Navbar = ({ setPosition }) => {
+const NavbarDashboard = ({ setPosition }) => {
     const [search, setSearch] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [showDropdown, setShowDropdown] = useState(false);
@@ -173,4 +173,4 @@ const Navbar = ({ setPosition }) => {
     );
 };
 
-export default Navbar;
+export default NavbarDashboard;

@@ -1,0 +1,25 @@
+.landing-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  .landing-page-navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #333;
+        padding: 10px 20px;
+        color: white;
+        z-index: 1000;
+
+  }
+  
+  .landing-page-content {
+    margin-top: 64px; /* Adjust based on your navbar height */
+    flex-grow: 1;
+  }

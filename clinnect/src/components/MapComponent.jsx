@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import Navbar from './Navbar';
+import Navbar from './NavbarDashboard';
 import '../css/MapComponent.css'; // Include any additional styling if needed
 import L from 'leaflet';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'; // Import FontAwesomeIcon
