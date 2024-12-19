@@ -1,0 +1,150 @@
+.location-cards-wrapper {
+    width: 100%;
+    padding: 20px 0;
+    background: #f8f9fa;
+    min-height: 300px; /* Ensure there's enough space for the cards */
+}
+
+.category-section {
+    margin-bottom: 30px;
+}
+
+.section-header {
+    padding: 0 40px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+    color: #333;
+}
+
+.section-icon {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.carousel-container {
+    position: relative;
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+}
+
+.cards-container {
+    display: flex;
+    gap: 16px;
+    overflow-x: scroll;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 10px 0;
+}
+
+.cards-container::-webkit-scrollbar {
+    display: none;
+}
+
+.location-card {
+    flex: 0 0 300px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.location-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.hospital-card {
+    border-left: 4px solid #2563eb;
+}
+
+.clinic-card {
+    border-left: 4px solid #16a34a;
+}
+
+.card-header {
+    padding: 16px;
+    border-bottom: 1px solid #eee;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+}
+
+.card-content {
+    padding: 16px;
+}
+
+.card-content p {
+    margin: 8px 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.label {
+    font-weight: 500;
+    color: #444;
+}
+
+.scroll-button {
+    position: absolute;
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ddd;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #666;
+    z-index: 1;
+    transition: all 0.2s ease;
+}
+
+.scroll-button:hover {
+    background: white;
+    color: #333;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.scroll-button.left {
+    left: 10px;
+}
+
+.scroll-button.right {
+    right: 10px;
+}
+
+@media (max-width: 768px) {
+    .section-header {
+        padding: 0 20px;
+    }
+
+    .carousel-container {
+        padding: 0 20px;
+    }
+
+    .location-card {
+        flex: 0 0 260px;
+    }
+
+    .scroll-button {
+        width: 32px;
+        height: 32px;
+        font-size: 20px;
+    }
+}
