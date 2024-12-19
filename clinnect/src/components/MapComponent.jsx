@@ -10,19 +10,15 @@ import axios from 'axios';
 import LocationCards from './LocationCards';
 
 // FlyToLocations as a separate component
-const FlyToLocations = ({ locations }) => {
+const FlyToLocations = ({ selectedLocation }) => {
     const map = useMap();
 
     useEffect(() => {
-        if (locations.length > 0) {
-            const coords = locations.map(loc => [parseFloat(loc.latitude), parseFloat(loc.longitude)]);
-            const bounds = L.latLngBounds(coords);
-            map.fitBounds(bounds, {
-                padding: [50, 50],
-                maxZoom: 12
-            });
+        if (selectedLocation) {
+            const { latitude, longitude } = selectedLocation;
+            map.flyTo([latitude, longitude],16, { duration: 1 }); // Fly to the selected location
         }
-    }, [locations]);
+    }, [selectedLocation, map]);
 
     return null;
 };
@@ -30,6 +26,7 @@ const FlyToLocations = ({ locations }) => {
 const MapComponent = () => {
     const [position, setPosition] = useState([14.077410594300181, 121.14928967621167]); // Default to a fallback location
     const [locations, setLocations] = useState([]);
+    const [selectedLocation, setSelectedLocation] = useState(null); // State to track selected location
 
     // Custom marker icons
     const createCustomIcon = (icon, color) => {
@@ -95,11 +92,6 @@ const MapComponent = () => {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution="&copy; OpenStreetMap contributors"
                 />
-                
-                {/* Default location marker
-                <Marker position={position} icon={defaultLocationIcon}>
-                    <Popup>You are here</Popup>
-                </Marker> */}
 
                 {/* Render additional location markers */}
                 {locations.map((loc, index) => (
@@ -122,10 +114,13 @@ const MapComponent = () => {
                     </Marker>
                 ))}
 
-                {/* Fly to locations component */}
-                {locations.length > 0 && <FlyToLocations locations={locations} />}
+                {/* Fly to the selected location */}
+                {selectedLocation && <FlyToLocations selectedLocation={selectedLocation} />}
             </MapContainer>
-            <LocationCards locations={locations} />
+            <LocationCards 
+                locations={locations} 
+                onLocationSelect={setSelectedLocation} // Pass function to handle card selection
+            />
         </div>
     );
 };
