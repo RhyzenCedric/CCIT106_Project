@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Circle } from 'react-leaflet';
 import Navbar from './NavbarDashboard';
 import '../css/MapComponent.css';
 import L from 'leaflet';
@@ -9,26 +9,37 @@ import ReactDOMServer from 'react-dom/server';
 import axios from 'axios';
 import LocationCards from './LocationCards';
 
-// FlyToLocations as a separate component
-const FlyToLocations = ({ selectedLocation }) => {
+// Function to calculate distance between two points using Haversine formula
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = 
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in kilometers
+};
+
+const FlyToGeolocation = ({ position }) => {
     const map = useMap();
 
     useEffect(() => {
-        if (selectedLocation) {
-            const { latitude, longitude } = selectedLocation;
-            map.flyTo([latitude, longitude],16, { duration: 1 }); // Fly to the selected location
+        if (position) {
+            map.flyTo(position, 16, { duration: 1 });
         }
-    }, [selectedLocation, map]);
+    }, [position, map]);
 
     return null;
 };
 
 const MapComponent = () => {
-    const [position, setPosition] = useState([14.077410594300181, 121.14928967621167]); // Default to a fallback location
+    const [position, setPosition] = useState(null);
     const [locations, setLocations] = useState([]);
-    const [selectedLocation, setSelectedLocation] = useState(null); // State to track selected location
+    const [selectedLocation, setSelectedLocation] = useState(null);
+    const [nearbyLocations, setNearbyLocations] = useState([]);
 
-    // Custom marker icons
     const createCustomIcon = (icon, color) => {
         return new L.DivIcon({
             className: 'custom-marker',
@@ -45,7 +56,22 @@ const MapComponent = () => {
     const clinicIcon = createCustomIcon(faClinicMedical, 'green');
     const defaultLocationIcon = createCustomIcon(faLocationDot, 'red');
 
-    // Fetch user geolocation on component mount
+    // Filter locations within 2km radius whenever position or locations change
+    useEffect(() => {
+        if (position && locations.length > 0) {
+            const filtered = locations.filter(loc => {
+                const distance = calculateDistance(
+                    position[0],
+                    position[1],
+                    parseFloat(loc.latitude),
+                    parseFloat(loc.longitude)
+                );
+                return distance <= 2; // 2km radius
+            });
+            setNearbyLocations(filtered);
+        }
+    }, [position, locations]);
+
     useEffect(() => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -62,7 +88,6 @@ const MapComponent = () => {
         }
     }, []);
 
-    // Handle search and update locations
     const handleSearch = async (searchQuery) => {
         if (typeof searchQuery === 'string' && searchQuery.toLowerCase() === 'medicard') {
             try {
@@ -84,8 +109,8 @@ const MapComponent = () => {
                 onSearch={handleSearch}
             />
             <MapContainer
-                center={position}
-                zoom={20}
+                center={position || [0, 0]}
+                zoom={16}
                 className='map-container'
             >
                 <TileLayer
@@ -93,8 +118,20 @@ const MapComponent = () => {
                     attribution="&copy; OpenStreetMap contributors"
                 />
 
-                {/* Render additional location markers */}
-                {locations.map((loc, index) => (
+                {position && (
+                    <>
+                        <Marker position={position} icon={defaultLocationIcon}>
+                            <Popup>You are here!</Popup>
+                        </Marker>
+                        {/* <Circle 
+                            center={position}
+                            radius={2000} // 2km in meters
+                            pathOptions={{ color: 'blue', fillColor: 'blue', fillOpacity: 0.1 }}
+                        /> */}
+                    </>
+                )}
+
+                {nearbyLocations.map((loc, index) => (
                     <Marker 
                         key={index} 
                         position={[parseFloat(loc.latitude), parseFloat(loc.longitude)]} 
@@ -114,12 +151,12 @@ const MapComponent = () => {
                     </Marker>
                 ))}
 
-                {/* Fly to the selected location */}
-                {selectedLocation && <FlyToLocations selectedLocation={selectedLocation} />}
+                {position && <FlyToGeolocation position={position} />}
+                {selectedLocation && <FlyToGeolocation position={[selectedLocation.latitude, selectedLocation.longitude]} />}
             </MapContainer>
             <LocationCards 
-                locations={locations} 
-                onLocationSelect={setSelectedLocation} // Pass function to handle card selection
+                locations={nearbyLocations}
+                onLocationSelect={setSelectedLocation}
             />
         </div>
     );

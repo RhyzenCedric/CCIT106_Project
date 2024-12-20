@@ -61,7 +61,7 @@ const NavbarDashboard = ({ setPosition, onSearch }) => {
                     <div className="navbar-search">
                         <input
                             type="text"
-                            placeholder="Search location..."
+                            placeholder="Enter Insurance Here"
                             value={search}
                             onChange={handleInputChange}
                             onKeyPress={handleKeyPress}
