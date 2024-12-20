@@ -9,20 +9,20 @@ import ReactDOMServer from 'react-dom/server';
 import axios from 'axios';
 import LocationCards from './LocationCards';
 
-// Function to calculate distance between two points using Haversine formula
-const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371;
+// Haversine formula to calculate distance between two lat/lng points
+const haversineDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of the Earth in kilometers
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a = 
+    const a =
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+    const distance = R * c; // Distance in kilometers
+    return distance;
 };
 
-// Component to handle routing
 const RouteDisplay = ({ startPoint, endPoint }) => {
     const [routePath, setRoutePath] = useState([]);
     const [trafficSegments, setTrafficSegments] = useState([]);
@@ -110,7 +110,6 @@ const MapComponent = () => {
     const [position, setPosition] = useState(null);
     const [locations, setLocations] = useState([]);
     const [selectedLocation, setSelectedLocation] = useState(null);
-    const [nearbyLocations, setNearbyLocations] = useState([]);
 
     const createCustomIcon = (icon, color) => {
         return new L.DivIcon({
@@ -127,21 +126,6 @@ const MapComponent = () => {
     const hospitalIcon = createCustomIcon(faHospital, 'blue');
     const clinicIcon = createCustomIcon(faClinicMedical, 'green');
     const defaultLocationIcon = createCustomIcon(faLocationDot, 'red');
-
-    useEffect(() => {
-        if (position && locations.length > 0) {
-            const filtered = locations.filter(loc => {
-                const distance = calculateDistance(
-                    position[0],
-                    position[1],
-                    parseFloat(loc.latitude),
-                    parseFloat(loc.longitude)
-                );
-                return distance <= 2;
-            });
-            setNearbyLocations(filtered);
-        }
-    }, [position, locations]);
 
     useEffect(() => {
         if (navigator.geolocation) {
@@ -163,13 +147,27 @@ const MapComponent = () => {
         if (typeof searchQuery === 'string' && searchQuery.toLowerCase() === 'medicard') {
             try {
                 const response = await axios.get(`http://localhost:5000/api/search?query=${searchQuery}`);
-                setLocations(response.data);
+                const fetchedLocations = response.data;
+                console.log(response.data);
+
+                // Filter locations within 5 km
+                if (position) {
+                    const filteredLocations = fetchedLocations.filter(loc => {
+                        const distance = haversineDistance(
+                            position[0], position[1], 
+                            parseFloat(loc.hospital_latitude), parseFloat(loc.hospital_longitude)
+                        );
+                        return distance <= 5; // Only locations within 5 km
+                    });
+                    setLocations(filteredLocations);
+                }
+
             } catch (error) {
                 console.error('Error fetching locations:', error);
-                setLocations([]);
+                setLocations([]); // Clear locations if there's an error
             }
         } else {
-            setLocations([]);
+            setLocations([]); // Clear locations if search query is invalid
         }
     };
 
@@ -195,23 +193,44 @@ const MapComponent = () => {
                     </Marker>
                 )}
 
-                {nearbyLocations.map((loc, index) => (
+                {/* Display all hospital and clinic locations within 5km */}
+                {locations.map((loc, index) => (
                     <Marker 
                         key={index} 
-                        position={[parseFloat(loc.latitude), parseFloat(loc.longitude)]} 
+                        position={[parseFloat(loc.hospital_latitude), parseFloat(loc.hospital_longitude)]} 
                         icon={loc.type === 'hospital' ? hospitalIcon : clinicIcon}
                     >
                         <Popup>
                             <div>
-                                <strong>{loc.name}</strong>
+                                <strong>{loc.hospital_name}</strong>
                                 <br />
-                                {loc.address}
-                                <br />
-                                Type: {loc.type.charAt(0).toUpperCase() + loc.type.slice(1)}
-                                <br />
-                                Contact: {loc.contact}
+                                {loc.hospital_contact_num && (
+                                    <>
+                                        Contact: {loc.hospital_contact_num}
+                                        <br />
+                                    </>
+                                )}
+                                {loc.hospital_email_address && (
+                                    <>
+                                        Email: {loc.hospital_email_address}
+                                        <br />
+                                    </>
+                                )}
+                                {loc.hospital_links && (
+                                    <>
+                                        Link: <a href={loc.hospital_links} target="_blank" rel="noopener noreferrer">{loc.hospital_links}</a>
+                                        <br />
+                                    </>
+                                )}
+                                {loc.insurances && (
+                                    <>
+                                        Insurances Accepted: {loc.insurances}
+                                        <br />
+                                    </>
+                                )}
                             </div>
                         </Popup>
+
                     </Marker>
                 ))}
 
@@ -219,15 +238,15 @@ const MapComponent = () => {
                 {position && selectedLocation && (
                     <RouteDisplay 
                         startPoint={position}
-                        endPoint={[parseFloat(selectedLocation.latitude), parseFloat(selectedLocation.longitude)]}
+                        endPoint={[parseFloat(selectedLocation.hospital_latitude), parseFloat(selectedLocation.hospital_longitude)]}
                     />
                 )}
 
                 {position && <FlyToGeolocation position={position} />}
-                {selectedLocation && <FlyToGeolocation position={[selectedLocation.latitude, selectedLocation.longitude]} />}
+                {selectedLocation && <FlyToGeolocation position={[selectedLocation.hospital_latitude, selectedLocation.hospital_longitude]} />}
             </MapContainer>
             <LocationCards 
-                locations={nearbyLocations}
+                locations={locations}
                 onLocationSelect={setSelectedLocation}
             />
         </div>

@@ -3,8 +3,13 @@ import '../css/LocationCards.css';
 
 const LocationCards = ({ locations, onLocationSelect }) => {
   // Separate locations into hospitals and clinics
-  const hospitals = locations.filter(loc => loc.type === 'hospital');
-  const clinics = locations.filter(loc => loc.type === 'clinic');
+  const hospitals = locations
+    .filter(loc => loc.type === 'hospital')
+    .sort((a, b) => a.hospital_name.localeCompare(b.hospital_name)); // Sort alphabetically by hospital name
+
+  const clinics = locations
+    .filter(loc => loc.type === 'clinic')
+    .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically by clinic name
 
   // State to manage visibility of each section
   const [showHospitals, setShowHospitals] = useState(false);
@@ -32,19 +37,16 @@ const LocationCards = ({ locations, onLocationSelect }) => {
             {showHospitals && (
               <div className="cards-grid">
                 {hospitals.map((hospital, index) => (
-                  <div 
-                    key={index} 
-                    className="location-card hospital-card" 
-                    onClick={() => onLocationSelect(hospital)}
+                  <div
+                    key={index}
+                    className="location-card hospital-card"
+                    onClick={() => onLocationSelect(hospital)} // Pass selected location
                   >
                     <div className="card-header">
-                      <h3>{hospital.name}</h3>
+                      <h3>{hospital.hospital_name}</h3>
                     </div>
                     <div className="card-content">
-                      <p className="address">{hospital.address}</p>
-                      <p className="contact">
-                        <span className="label">Contact:</span> {hospital.contact}
-                      </p>
+                      <p className="address">{hospital.hospital_address}</p>
                     </div>
                   </div>
                 ))}
@@ -69,9 +71,9 @@ const LocationCards = ({ locations, onLocationSelect }) => {
             {showClinics && (
               <div className="cards-grid">
                 {clinics.map((clinic, index) => (
-                  <div 
-                    key={index} 
-                    className="location-card clinic-card" 
+                  <div
+                    key={index}
+                    className="location-card clinic-card"
                     onClick={() => onLocationSelect(clinic)}
                   >
                     <div className="card-header">
@@ -95,3 +97,4 @@ const LocationCards = ({ locations, onLocationSelect }) => {
 };
 
 export default LocationCards;
+

@@ -23,7 +23,7 @@ const dbConfig = {
 // MySQL Connection Pool
 const pool = mysql.createPool(dbConfig);
 
-// Search API Endpoint
+// Search API Endpoint (existing)
 app.get('/api/search', async (req, res) => {
     const { query } = req.query;
 
@@ -32,52 +32,46 @@ app.get('/api/search', async (req, res) => {
     }
 
     try {
-        // Log the search query
         console.log(`[${new Date().toISOString()}] Search Query: ${query}`);
 
-        // Search in hospitals table
-        const [hospitalResults] = await pool.execute(`
+        const [results] = await pool.execute(`
             SELECT 
-                hospital_name as name, 
-                hospital_address as address, 
-                hospital_email as email, 
-                hospital_contactnum as contact, 
-                hospital_latitude as latitude, 
-                hospital_longitude as longitude,
-                'hospital' as type
-            FROM medicard_hospital 
+                h.hospital_name AS hospital_name, 
+                h.address AS hospital_address,
+                h.email_address AS hospital_email_address,
+                h.contact_num AS hospital_contact_num,
+                h.latitude AS hospital_latitude,
+                h.longitude AS hospital_longitude,
+                h.links AS hospital_links,
+                h.type,
+                i.insurance_name AS insurance_name
+            FROM hospitals h
+            JOIN hospital_insurance hi ON h.hospital_id = hi.hospital_id
+            JOIN insurances i ON hi.insurance_id = i.insurance_id
+            WHERE i.insurance_name LIKE ?
+        `, [`%${query}%`]);
 
-        `, [`%${query}%`, `%${query}%`]);
+        const groupedResults = results.reduce((acc, result) => {
+            if (!acc[result.hospital_name]) {
+                acc[result.hospital_name] = {
+                    hospital_name: result.hospital_name,
+                    hospital_address: result.hospital_address,
+                    hospital_email_address: result.hospital_email_address,
+                    hospital_contact_num: result.hospital_contact_num,
+                    hospital_latitude: result.hospital_latitude,
+                    hospital_longitude: result.hospital_longitude,
+                    hospital_links: result.hospital_links,
+                    type:result.type,
+                    insurances: []
+                };
+            }
+            acc[result.hospital_name].insurances.push(result.insurance_name);
+            return acc;
+        }, {});
 
-        // Search in clinics table
-        const [clinicResults] = await pool.execute(`
-            SELECT 
-                clinic_name as name, 
-                clinic_address as address, 
-                clinic_email as email, 
-                clinic_contactnum as contact, 
-                clinic_latitude as latitude, 
-                clinic_longitude as longitude,
-                'clinic' as type
-            FROM medicard_clinic 
+        const formattedResults = Object.values(groupedResults);
 
-        `, [`%${query}%`, `%${query}%`]);
-
-        // Log the results
-        console.log(`[${new Date().toISOString()}] Hospitals Found: ${hospitalResults.length}`);
-        hospitalResults.forEach((hospital, index) => {
-            console.log(`  Hospital ${index + 1}: ${hospital.name} - ${hospital.address}`);
-        });
-
-        console.log(`[${new Date().toISOString()}] Clinics Found: ${clinicResults.length}`);
-        clinicResults.forEach((clinic, index) => {
-            console.log(`  Clinic ${index + 1}: ${clinic.name} - ${clinic.address}`);
-        });
-
-        // Combine and return results
-        const combinedResults = [...hospitalResults, ...clinicResults];
-        
-        res.json(combinedResults);
+        res.json(formattedResults);
     } catch (error) {
         console.error(`[${new Date().toISOString()}] Search Error:`, error);
         res.status(500).json({ error: 'Internal server error' });
