@@ -263,9 +263,24 @@ const MapComponent = () => {
                             {/* Display website link based on the type of location */}
                             {loc.hospital_links || loc.clinic_links ? (
                                 <>
-                                    Website: <a href={loc.hospital_links || loc.clinic_links} target="_blank" rel="noopener noreferrer">{loc.hospital_links || loc.clinic_links}</a>
+                                    Website: <a href={loc.hospital_links || loc.clinic_links} target="_blank" rel="noopener noreferrer">
+                                        {loc.hospital_links || loc.clinic_links}
+                                    </a>
+                                    <br />
                                 </>
                             ) : null}
+                            {/* Display accepted insurances */}
+                            {loc.insurances && loc.insurances.length > 0 && (
+                                <>
+                                    <strong>Accepted Insurances:</strong>
+                                    <br />
+                                    <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
+                                        {loc.insurances.sort().map((insurance, idx) => (
+                                            <li key={idx}>{insurance}</li>
+                                        ))}
+                                    </ul>
+                                </>
+                            )}
                         </div>
                     </Popup>
                     </Marker>

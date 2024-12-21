@@ -36,7 +36,7 @@ app.get('/api/search', async (req, res) => {
 
         const [hospitalResults] = await pool.execute(`
             SELECT 
-                h.hospital_name AS hospital_name, 
+                h.hospital_name, 
                 h.address AS hospital_address,
                 h.email_address AS hospital_email_address,
                 h.contact_num AS hospital_contact_num,
@@ -44,16 +44,24 @@ app.get('/api/search', async (req, res) => {
                 h.longitude AS hospital_longitude,
                 h.links AS hospital_links,
                 h.type,
-                i.insurance_name AS insurance_name
+                GROUP_CONCAT(i.insurance_name) AS all_insurances
             FROM hospitals h
             JOIN hospital_insurance hi ON h.hospital_id = hi.hospital_id
             JOIN insurances i ON hi.insurance_id = i.insurance_id
-            WHERE i.insurance_name LIKE ?
+            WHERE EXISTS (
+                SELECT 1 
+                FROM hospital_insurance hi2 
+                JOIN insurances i2 ON hi2.insurance_id = i2.insurance_id 
+                WHERE hi2.hospital_id = h.hospital_id 
+                AND i2.insurance_name LIKE ?
+            )
+            GROUP BY h.hospital_id
         `, [`%${query}%`]);
-
+        
+        // Similarly for the clinic query:
         const [clinicResults] = await pool.execute(`
             SELECT 
-                c.clinic_name AS clinic_name, 
+                c.clinic_name, 
                 c.address AS clinic_address,
                 c.email_address AS clinic_email_address,
                 c.contact_num AS clinic_contact_num,
@@ -61,25 +69,30 @@ app.get('/api/search', async (req, res) => {
                 c.longitude AS clinic_longitude,
                 c.links AS clinic_links,
                 c.type,
-                i.insurance_name AS insurance_name
+                GROUP_CONCAT(i.insurance_name) AS all_insurances
             FROM clinics c
             JOIN clinic_insurance ci ON c.clinic_id = ci.clinic_id
             JOIN insurances i ON ci.insurance_id = i.insurance_id
-            WHERE i.insurance_name LIKE ?
+            WHERE EXISTS (
+                SELECT 1 
+                FROM clinic_insurance ci2 
+                JOIN insurances i2 ON ci2.insurance_id = i2.insurance_id 
+                WHERE ci2.clinic_id = c.clinic_id 
+                AND i2.insurance_name LIKE ?
+            )
+            GROUP BY c.clinic_id
         `, [`%${query}%`]);
 
         const allResults = [...hospitalResults, ...clinicResults];
-
+        
+        // Modify the groupedResults reduction:
         const groupedResults = allResults.reduce((acc, result) => {
             const key = result.type === 'hospital' ? result.hospital_name : result.clinic_name;
             if (!acc[key]) {
-                acc[key] = { ...result, insurances: [] };
-            }
-            if (result.type === 'hospital' && result.insurance_name) {
-                acc[key].insurances.push(result.insurance_name);
-            }
-            else if (result.type === 'clinic' && result.insurance_name) {
-                acc[key].insurances.push(result.insurance_name);
+                acc[key] = { 
+                    ...result, 
+                    insurances: result.all_insurances ? result.all_insurances.split(',') : [] 
+                };
             }
             return acc;
         }, {});
