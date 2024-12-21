@@ -55,7 +55,7 @@ const RouteDisplay = ({ startPoint, endPoint }) => {
                         } else {
                             color = '#FF0000'; // Red - heavy traffic
                         }
-                        
+
                         segments.push({
                             path: [coordinates[i], coordinates[i + 1]],
                             color: color
@@ -125,6 +125,10 @@ const MapComponent = () => {
         });
     };
 
+    const handleLocationSelect = (coordinates) => {
+        setSelectedLocation(coordinates);
+    };
+
     const hospitalIcon = createCustomIcon(faHospital, 'blue');
     const clinicIcon = createCustomIcon(faClinicMedical, 'green');
     const defaultLocationIcon = createCustomIcon(faLocationDot, 'red');
@@ -150,25 +154,36 @@ const MapComponent = () => {
 
     const handleSearch = async (searchQuery) => {
         try {
-            // Fetch insurance data from the backend
+            // Fetch data from the backend
             const response = await axios.get(`http://localhost:5000/api/search?query=${searchQuery}`);
             const fetchedLocations = response.data;
-    
-            if (fetchedLocations.length === 0) {
-                // No matching insurance found
-                alert("The term is not an insurance name");
 
+            if (fetchedLocations.length === 0) {
+                // No matching results found
+                alert("The term is not an insurance name");
                 return;
             }
-    
-            // Filter locations within 5 km if a match is found
+
+            // Filter locations based on distance (5 km) and check for both hospitals and clinics
             if (position) {
                 const filteredLocations = fetchedLocations.filter(loc => {
-                    const distance = haversineDistance(
-                        position[0], position[1], 
-                        parseFloat(loc.hospital_latitude), parseFloat(loc.hospital_longitude)
-                    );
-                    return distance <= 5; // Only locations within 5 km
+                    // Calculate distance for hospitals
+                    const hospitalDistance = loc.hospital_latitude && loc.hospital_longitude
+                        ? haversineDistance(
+                            position[0], position[1],
+                            parseFloat(loc.hospital_latitude), parseFloat(loc.hospital_longitude)
+                        )
+                        : Infinity;
+
+                    // Calculate distance for clinics
+                    const clinicDistance = loc.clinic_latitude && loc.clinic_longitude
+                        ? haversineDistance(
+                            position[0], position[1],
+                            parseFloat(loc.clinic_latitude), parseFloat(loc.clinic_longitude)
+                        )
+                        : Infinity;
+
+                    return hospitalDistance <= 5 || clinicDistance <= 5; // Only locations within 5 km
                 });
                 setLocations(filteredLocations);
             }
@@ -224,58 +239,47 @@ const MapComponent = () => {
                 {locations.map((loc, index) => (
                     <Marker 
                         key={index} 
-                        position={[parseFloat(loc.hospital_latitude), parseFloat(loc.hospital_longitude)]} 
+                        position={[parseFloat(loc.hospital_latitude || loc.clinic_latitude), parseFloat(loc.hospital_longitude || loc.clinic_longitude)]} 
                         icon={loc.type === 'hospital' ? hospitalIcon : clinicIcon}
                     >
-                        <Popup>
-                            <div>
-                                <strong>{loc.hospital_name}</strong>
-                                <br />
-                                {loc.hospital_contact_num && (
-                                    <>
-                                        Contact: {loc.hospital_contact_num}
-                                        <br />
-                                    </>
-                                )}
-                                {loc.hospital_email_address && (
-                                    <>
-                                        Email: {loc.hospital_email_address}
-                                        <br />
-                                    </>
-                                )}
-                                {loc.hospital_links && (
-                                    <>
-                                        Link: <a href={loc.hospital_links} target="_blank" rel="noopener noreferrer">{loc.hospital_links}</a>
-                                        <br />
-                                    </>
-                                )}
-                                {loc.insurances && (
-                                    <>
-                                        Insurances Accepted: {loc.insurances}
-                                        <br />
-                                    </>
-                                )}
-                            </div>
-                        </Popup>
-
+                    <Popup>
+                        <div>
+                            <strong>{loc.hospital_name || loc.clinic_name}</strong>
+                            <br />
+                            {/* Display contact number based on the type of location */}
+                            {loc.hospital_contact_num || loc.clinic_contact_num ? (
+                                <>
+                                    Contact: {loc.hospital_contact_num || loc.clinic_contact_num}
+                                    <br />
+                                </>
+                            ) : null}
+                            {/* Display email address based on the type of location */}
+                            {loc.hospital_email_address || loc.clinic_email_address ? (
+                                <>
+                                    Email: {loc.hospital_email_address || loc.clinic_email_address}
+                                    <br />
+                                </>
+                            ) : null}
+                            {/* Display website link based on the type of location */}
+                            {loc.hospital_links || loc.clinic_links ? (
+                                <>
+                                    Website: <a href={loc.hospital_links || loc.clinic_links} target="_blank" rel="noopener noreferrer">{loc.hospital_links || loc.clinic_links}</a>
+                                </>
+                            ) : null}
+                        </div>
+                    </Popup>
                     </Marker>
                 ))}
 
-                {/* Display route when location is selected */}
-                {position && selectedLocation && (
-                    <RouteDisplay 
-                        startPoint={position}
-                        endPoint={[parseFloat(selectedLocation.hospital_latitude), parseFloat(selectedLocation.hospital_longitude)]}
-                    />
+                {/* Route display */}
+                {selectedLocation && (
+                    <RouteDisplay startPoint={position} endPoint={selectedLocation} />
                 )}
 
-                {position && <FlyToGeolocation position={position} />}
-                {selectedLocation && <FlyToGeolocation position={[selectedLocation.hospital_latitude, selectedLocation.hospital_longitude]} />}
+                <FlyToGeolocation position={position} />
             </MapContainer>
-            <LocationCards 
-                locations={locations}
-                onLocationSelect={setSelectedLocation}
-            />
+
+            <LocationCards locations={locations} onLocationSelect={handleLocationSelect} />
         </div>
     );
 };
