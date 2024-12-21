@@ -110,6 +110,8 @@ const MapComponent = () => {
     const [position, setPosition] = useState(null);
     const [locations, setLocations] = useState([]);
     const [selectedLocation, setSelectedLocation] = useState(null);
+    const [pinnedLocation, setPinnedLocation] = useState(null);
+    const batangasCoords = [13.942719267909442, 121.16651000059406]; 
 
     const createCustomIcon = (icon, color) => {
         return new L.DivIcon({
@@ -126,6 +128,7 @@ const MapComponent = () => {
     const hospitalIcon = createCustomIcon(faHospital, 'blue');
     const clinicIcon = createCustomIcon(faClinicMedical, 'green');
     const defaultLocationIcon = createCustomIcon(faLocationDot, 'red');
+    const pinnedIcon = createCustomIcon(faLocationDot, 'purple');
 
     useEffect(() => {
         if (navigator.geolocation) {
@@ -136,39 +139,48 @@ const MapComponent = () => {
                 },
                 (error) => {
                     console.error('Error retrieving geolocation:', error);
+                    setPosition(batangasCoords);
                 }
             );
         } else {
             console.error('Geolocation is not supported by this browser.');
+            setPosition(batangasCoords);
         }
     }, []);
 
     const handleSearch = async (searchQuery) => {
-        if (typeof searchQuery === 'string' && searchQuery.toLowerCase() === 'medicard') {
-            try {
-                const response = await axios.get(`http://localhost:5000/api/search?query=${searchQuery}`);
-                const fetchedLocations = response.data;
-                console.log(response.data);
+        try {
+            // Fetch insurance data from the backend
+            const response = await axios.get(`http://localhost:5000/api/search?query=${searchQuery}`);
+            const fetchedLocations = response.data;
+    
+            if (fetchedLocations.length === 0) {
+                // No matching insurance found
+                alert("The term is not an insurance name");
 
-                // Filter locations within 5 km
-                if (position) {
-                    const filteredLocations = fetchedLocations.filter(loc => {
-                        const distance = haversineDistance(
-                            position[0], position[1], 
-                            parseFloat(loc.hospital_latitude), parseFloat(loc.hospital_longitude)
-                        );
-                        return distance <= 5; // Only locations within 5 km
-                    });
-                    setLocations(filteredLocations);
-                }
-
-            } catch (error) {
-                console.error('Error fetching locations:', error);
-                setLocations([]); // Clear locations if there's an error
+                return;
             }
-        } else {
-            setLocations([]); // Clear locations if search query is invalid
+    
+            // Filter locations within 5 km if a match is found
+            if (position) {
+                const filteredLocations = fetchedLocations.filter(loc => {
+                    const distance = haversineDistance(
+                        position[0], position[1], 
+                        parseFloat(loc.hospital_latitude), parseFloat(loc.hospital_longitude)
+                    );
+                    return distance <= 5; // Only locations within 5 km
+                });
+                setLocations(filteredLocations);
+            }
+        } catch (error) {
+            console.error('Error fetching locations:', error);
+            setLocations([]); // Clear locations on error
         }
+    };
+
+    const handleMapClick = (e) => {
+        const { lat, lng } = e.latlng;
+        setPinnedLocation([lat, lng]);
     };
 
     return (
@@ -178,9 +190,10 @@ const MapComponent = () => {
                 onSearch={handleSearch}
             />
             <MapContainer
-                center={position || [0, 0]}
+                center={position || batangasCoords}
                 zoom={16}
                 className='map-container'
+                onClick={handleMapClick} // Add click handler to the map
             >
                 <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -190,6 +203,20 @@ const MapComponent = () => {
                 {position && (
                     <Marker position={position} icon={defaultLocationIcon}>
                         <Popup>You are here!</Popup>
+                    </Marker>
+                )}
+
+                {pinnedLocation && (
+                    <Marker position={pinnedLocation} icon={pinnedIcon}>
+                        <Popup>
+                            <div>
+                                <strong>Pinned Location</strong>
+                                <br />
+                                Latitude: {pinnedLocation[0].toFixed(5)}
+                                <br />
+                                Longitude: {pinnedLocation[1].toFixed(5)}
+                            </div>
+                        </Popup>
                     </Marker>
                 )}
 

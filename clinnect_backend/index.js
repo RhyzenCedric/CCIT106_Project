@@ -34,7 +34,7 @@ app.get('/api/search', async (req, res) => {
     try {
         console.log(`[${new Date().toISOString()}] Search Query: ${query}`);
 
-        const [results] = await pool.execute(`
+        const [hospitalResults] = await pool.execute(`
             SELECT 
                 h.hospital_name AS hospital_name, 
                 h.address AS hospital_address,
@@ -51,21 +51,36 @@ app.get('/api/search', async (req, res) => {
             WHERE i.insurance_name LIKE ?
         `, [`%${query}%`]);
 
-        const groupedResults = results.reduce((acc, result) => {
-            if (!acc[result.hospital_name]) {
-                acc[result.hospital_name] = {
-                    hospital_name: result.hospital_name,
-                    hospital_address: result.hospital_address,
-                    hospital_email_address: result.hospital_email_address,
-                    hospital_contact_num: result.hospital_contact_num,
-                    hospital_latitude: result.hospital_latitude,
-                    hospital_longitude: result.hospital_longitude,
-                    hospital_links: result.hospital_links,
-                    type:result.type,
-                    insurances: []
-                };
+        const [clinicResults] = await pool.execute(`
+            SELECT 
+                c.clinic_name AS clinic_name, 
+                c.address AS clinic_address,
+                c.email_address AS clinic_email_address,
+                c.contact_num AS clinic_contact_num,
+                c.latitude AS clinic_latitude,
+                c.longitude AS clinic_longitude,
+                c.links AS clinic_links,
+                c.type,
+                i.insurance_name AS insurance_name
+            FROM clinics c
+            JOIN clinic_insurance ci ON c.clinic_id = ci.clinic_id
+            JOIN insurances i ON ci.insurance_id = i.insurance_id
+            WHERE i.insurance_name LIKE ?
+        `, [`%${query}%`]);
+
+        const allResults = [...hospitalResults, ...clinicResults];
+
+        const groupedResults = allResults.reduce((acc, result) => {
+            const key = result.type === 'hospital' ? result.hospital_name : result.clinic_name;
+            if (!acc[key]) {
+                acc[key] = { ...result, insurances: [] };
             }
-            acc[result.hospital_name].insurances.push(result.insurance_name);
+            if (result.type === 'hospital' && result.insurance_name) {
+                acc[key].insurances.push(result.insurance_name);
+            }
+            else if (result.type === 'clinic' && result.insurance_name) {
+                acc[key].insurances.push(result.insurance_name);
+            }
             return acc;
         }, {});
 
